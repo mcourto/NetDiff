@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+  <title>Account Diff Tool</title>
+
+  <style>
+
+    /* Add some basic styling */
+
+    iframe {
+
+      width: 45%;
+
+      height: 600px;
+
+      display: inline-block;
+
+    }
+
+    .console {
+
+      width: 45%;
+
+      height: 300px;
+
+      overflow: auto;
+
+      border: 1px solid #ccc;
+
+      display: inline-block;
+
+      margin: 10px;
+
+      font-family: monospace;
+
+      font-size: 12px;
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <h1>Account Diff Tool</h1>
+
+  
+
+  <input id="url1" placeholder="Account 1 URL" />
+
+  <input id="url2" placeholder="Account 2 URL" />
+
+  <button id="loadBtn">Load</button>
+
+  
+
+  
+
+
+
+
+
+  
+
+  <textarea id="beforeJs" placeholder="JavaScript to run before each iframe loads"></textarea>
+
+  <textarea id="afterJs" placeholder="JavaScript to run after each iframe loads"></textarea>
+
+  
+
+  
+
+
+
+
+
+  
+
+  <iframe id="iframe1"></iframe>
+
+  <iframe id="iframe2"></iframe>
+
+  
+
+  
+
+
+
+  
+
+  <div id="console1" class="console"></div>
+
+  <div id="console2" class="console"></div>
+
+  
+
+  <button id="diffBtn">Diff</button>
+
+  
+
+  <h2>Local Storage</h2>
+
+  <textarea id="storageArea" rows="10" cols="50"></textarea>
+
+  <button id="loadStorageBtn">Load</button>
+
+  <button id="saveStorageBtn">Save</button>
+
+  
+
+  <script>
+
+    const iframe1 = document.getElementById('iframe1');
+
+    const iframe2 = document.getElementById('iframe2');
+
+    const console1 = document.getElementById('console1');
+
+    const console2 = document.getElementById('console2');
+
+    const storageArea = document.getElementById('storageArea');
+
+    const beforeJs = document.getElementById('beforeJs');
+
+    const afterJs = document.getElementById('afterJs');
+
+    
+
+    document.getElementById('loadBtn').addEventListener('click', () => {
+
+      const url1 = document.getElementById('url1').value;
+
+      const url2 = document.getElementById('url2').value;
+
+      
+
+      eval(beforeJs.value);
+
+      
+
+      iframe1.src = url1;
+
+      iframe2.src = url2;
+
+    });
+
+    
+
+    const captureRequests = (iframe, consoleEl, storageKey) => {
+
+      const win = iframe.contentWindow;
+
+      
+
+      win.fetch = new Proxy(win.fetch, {
+
+        apply: (target, that, args) => {
+
+          const url = args[0];
+
+          const options = args[1] || {};
+
+          
+
+          const entry = {method: 'fetch', url, options};
+
+          consoleEl.innerHTML += `Fetch: ${url}\n`;
+
+          consoleEl.innerHTML += `Options: ${JSON.stringify(options)}\n\n`;
+
+          
+
+          const storage = JSON.parse(localStorage.getItem(storageKey) || '[]');
+
+          storage.push(entry);
+
+          localStorage.setItem(storageKey, JSON.stringify(storage));
+
+          
+
+          return target.apply(that, args);
+
+        }
+
+      });
+
+      
+
+      win.XMLHttpRequest = class extends win.XMLHttpRequest {
+
+        open(method, url) {
+
+          const entry = {method, url};
+
+          consoleEl.innerHTML += `XHR: ${method} ${url}\n`;
+
+          
+
+          const storage = JSON.parse(localStorage.getItem(storageKey) || '[]');
+
+          storage.push(entry);
+
+          localStorage.setItem(storageKey, JSON.stringify(storage));
+
+          
+
+          return super.open(method, url);
+
+        }
+
+      };
+
+    };
+
+    
+
+    iframe1.onload = () => {
+
+      captureRequests(iframe1, console1, 'requests1');
+
+      eval(afterJs.value);
+
+    };
+
+    
+
+    iframe2.onload = () => {
+
+      captureRequests(iframe2, console2, 'requests2');
+
+      eval(afterJs.value);
+
+    };
+
+    
+
+    document.getElementById('diffBtn').addEventListener('click', () => {
+
+      const requests1 = JSON.parse(localStorage.getItem('requests1') || '[]');
+
+      const requests2 = JSON.parse(localStorage.getItem('requests2') || '[]');
+
+      
+
+      const diffs = [];
+
+      
+
+      requests1.forEach((req1, index) => {
+
+        const req2 = requests2[index];
+
+        
+
+        if (req2 && (req1.method !== req2.method || req1.url !== req2.url)) {
+
+          diffs.push({index, req1, req2});
+
+        }
+
+      });
+
+      
+
+      console.log('Diffs:', diffs);
+
+      alert(`Found ${diffs.length} diffs! Check the console for details.`);
+
+    });
+
+    
+
+    document.getElementById('loadStorageBtn').addEventListener('click', () => {
+
+      const storage = JSON.parse(localStorage.getItem('requests1') || '[]')
+
+        .concat(JSON.parse(localStorage.getItem('requests2') || '[]'));
+
+      
+
+      storageArea.value = JSON.stringify(storage, null, 2);
+
+    });
+
+    
+
+    document.getElementById('saveStorageBtn').addEventListener('click', () => {
+
+      const storage = JSON.parse(storageArea.value);
+
+      
+
+      localStorage.setItem('requests1', JSON.stringify(storage.filter((_, index) => index % 2 === 0)));
+
+      localStorage.setItem('requests2', JSON.stringify(storage.filter((_, index) => index % 2 === 1)));
+
+      
+
+      alert('Local storage updated!');
+
+    });
+
+  </script>
+
+</body>
+
+</html>
