@@ -1,3 +1,5 @@
+My bad, here's the complete updated code with separate local storage for each iframe:
+
 <!DOCTYPE html>
 
 <html>
@@ -48,59 +50,25 @@
 
   <h1>Account Diff Tool</h1>
 
-  
-
   <input id="url1" placeholder="Account 1 URL" />
 
   <input id="url2" placeholder="Account 2 URL" />
 
   <button id="loadBtn">Load</button>
 
-  
-
-  
-
-
-
-
-
-  
-
   <textarea id="beforeJs" placeholder="JavaScript to run before each iframe loads"></textarea>
 
   <textarea id="afterJs" placeholder="JavaScript to run after each iframe loads"></textarea>
-
-  
-
-  
-
-
-
-
-
-  
 
   <iframe id="iframe1"></iframe>
 
   <iframe id="iframe2"></iframe>
 
-  
-
-  
-
-
-
-  
-
   <div id="console1" class="console"></div>
 
   <div id="console2" class="console"></div>
 
-  
-
   <button id="diffBtn">Diff</button>
-
-  
 
   <h2>Local Storage</h2>
 
@@ -109,8 +77,6 @@
   <button id="loadStorageBtn">Load</button>
 
   <button id="saveStorageBtn">Save</button>
-
-  
 
   <script>
 
